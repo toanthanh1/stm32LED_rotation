@@ -42,9 +42,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-  uint32_t lastToggle[4] = {0, 0, 0, 0};
-  uint32_t intervals[4] = {1000, 750, 500, 250}; // ms
+  uint32_t lastToggle[4] = {0, 0, 0, 0}; // Stores last toggle time for each LED
+  uint32_t intervals[4] = {1000, 750, 500, 250}; // Toggle intervals in ms
   GPIO_PinState ledStates[4] = {GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET};
+	
+	  GPIO_PinState lastButtonState = GPIO_PIN_RESET;
+  uint8_t led_index = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,10 +67,10 @@ static void set_led_by_index(uint8_t idx)
   /* order: cam (PD13) => d? (PD14) => xanh duong (PD15) => xanh l� (PD12) */
   switch (idx % 4)
   {
-    case 0: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); break; // cam
-    case 1: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET); break; // d?
-    case 2: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET); break; // xanh duong
-    case 3: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); break; // xanh l�
+    case 0: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); break; // orange
+    case 1: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET); break; // red
+    case 2: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET); break; // blue
+    case 3: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); break; // green
   }
 }
 /* USER CODE END 0 */
@@ -118,31 +121,45 @@ int main(void)
   {
     uint32_t now = HAL_GetTick();
 
-    // LED1: PD13
+    // Toggle LED1 (PD13) every 1 second using direct register access
     if (now - lastToggle[0] >= intervals[0]) {
       ledStates[0] = (ledStates[0] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
-      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, ledStates[0]);
+      if (ledStates[0] == GPIO_PIN_SET)
+        GPIOD->ODR |= GPIO_PIN_13;   // Turn ON LED1
+      else
+        GPIOD->ODR &= ~GPIO_PIN_13;  // Turn OFF LED1
       lastToggle[0] = now;
     }
-    // LED2: PD14
+
+    // Toggle LED2 (PD14) every 750 ms
     if (now - lastToggle[1] >= intervals[1]) {
       ledStates[1] = (ledStates[1] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
-      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, ledStates[1]);
+      if (ledStates[1] == GPIO_PIN_SET)
+        GPIOD->ODR |= GPIO_PIN_14;   // Turn ON LED2
+      else
+        GPIOD->ODR &= ~GPIO_PIN_14;  // Turn OFF LED2
       lastToggle[1] = now;
     }
-    // LED3: PD15
+
+    // Toggle LED3 (PD15) every 500 ms
     if (now - lastToggle[2] >= intervals[2]) {
       ledStates[2] = (ledStates[2] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
-      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, ledStates[2]);
+      if (ledStates[2] == GPIO_PIN_SET)
+        GPIOD->ODR |= GPIO_PIN_15;   // Turn ON LED3
+      else
+        GPIOD->ODR &= ~GPIO_PIN_15;  // Turn OFF LED3
       lastToggle[2] = now;
     }
-    // LED4: PD12
+
+    // Toggle LED4 (PD12) every 250 ms
     if (now - lastToggle[3] >= intervals[3]) {
       ledStates[3] = (ledStates[3] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
-      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, ledStates[3]);
+      if (ledStates[3] == GPIO_PIN_SET)
+        GPIOD->ODR |= GPIO_PIN_12;   // Turn ON LED4
+      else
+        GPIOD->ODR &= ~GPIO_PIN_12;  // Turn OFF LED4
       lastToggle[3] = now;
     }
-    // Không dùng HAL_Delay để tránh blocking
   }
   /* USER CODE END 3 */
 }
