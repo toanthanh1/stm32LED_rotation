@@ -42,17 +42,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t led_index = 0;
-uint32_t lastDebounceMillis = 0;
-GPIO_PinState lastButtonState = GPIO_PIN_RESET;
-const uint32_t debounceDelay = 50; // ms
-
-/* moved debounce/internal state here so they're global for debug */
-uint32_t localLastDebounce = 0;
-GPIO_PinState prevReading = GPIO_PIN_RESET;
-GPIO_PinState prevStable = GPIO_PIN_RESET;
-GPIO_PinState idleLevel = GPIO_PIN_RESET;
-uint8_t initDone = 0;
+  uint32_t lastToggle[4] = {0, 0, 0, 0};
+  uint32_t intervals[4] = {1000, 750, 500, 250}; // ms
+  GPIO_PinState ledStates[4] = {GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,13 +61,13 @@ static void set_led_by_index(uint8_t idx)
   /* turn all off first */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
-  /* order: cam (PD13) => d? (PD14) => xanh duong (PD15) => xanh l� (PD12) */
+  /* order: cam (PD13) => d? (PD14) => xanh duong (PD15) => xanh l� (PD12) */
   switch (idx % 4)
   {
     case 0: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); break; // cam
     case 1: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET); break; // d?
     case 2: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET); break; // xanh duong
-    case 3: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); break; // xanh l�
+    case 3: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); break; // xanh l�
   }
 }
 /* USER CODE END 0 */
@@ -120,41 +112,37 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   while (1)
   {
-    /* USER CODE END WHILE */
+    uint32_t now = HAL_GetTick();
 
-    /* USER CODE BEGIN 3 */
-
-    /* Read button and debounce; on a validated press (rising edge) advance LED */
-    GPIO_PinState reading = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
-
-    if (!initDone) {
-      idleLevel = lastButtonState;
-      prevReading = lastButtonState;
-      prevStable = lastButtonState;
-      localLastDebounce = lastDebounceMillis;
-      initDone = 1;
+    // LED1: PD13
+    if (now - lastToggle[0] >= intervals[0]) {
+      ledStates[0] = (ledStates[0] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
+      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, ledStates[0]);
+      lastToggle[0] = now;
     }
-
-    if (reading != prevReading) {
-      localLastDebounce = HAL_GetTick();
+    // LED2: PD14
+    if (now - lastToggle[1] >= intervals[1]) {
+      ledStates[1] = (ledStates[1] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
+      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, ledStates[1]);
+      lastToggle[1] = now;
     }
-
-    if ((HAL_GetTick() - localLastDebounce) > debounceDelay) {
-      if (reading != prevStable) {
-        if (reading != idleLevel) {
-          led_index = (led_index + 1) % 4;
-          set_led_by_index(led_index);
-        }
-        prevStable = reading;
-      }
+    // LED3: PD15
+    if (now - lastToggle[2] >= intervals[2]) {
+      ledStates[2] = (ledStates[2] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
+      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, ledStates[2]);
+      lastToggle[2] = now;
     }
-
-    prevReading = reading;
-    lastButtonState = reading;
-
-    HAL_Delay(10);
+    // LED4: PD12
+    if (now - lastToggle[3] >= intervals[3]) {
+      ledStates[3] = (ledStates[3] == GPIO_PIN_SET) ? GPIO_PIN_RESET : GPIO_PIN_SET;
+      HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, ledStates[3]);
+      lastToggle[3] = now;
+    }
+    // Không dùng HAL_Delay để tránh blocking
   }
   /* USER CODE END 3 */
 }
