@@ -46,7 +46,7 @@
   uint32_t intervals[4] = {1000, 750, 500, 250}; // Toggle intervals in ms
   GPIO_PinState ledStates[4] = {GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET, GPIO_PIN_RESET};
 	
-	  GPIO_PinState lastButtonState = GPIO_PIN_RESET;
+	GPIO_PinState lastButtonState = GPIO_PIN_RESET;
   uint8_t led_index = 0;
 /* USER CODE END PV */
 
@@ -59,12 +59,16 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/*
+ * Turn ON only one LED according to the given index, turn OFF all others.
+ *        LED order: 0 - orange (PD13), 1 - red (PD14), 2 - blue (PD15), 3 - green (PD12)
+ * Index of the LED to turn ON (0 to 3)
+ */
 static void set_led_by_index(uint8_t idx)
 {
   /* turn all off first */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
-
-  /* order: cam (PD13) => d? (PD14) => xanh duong (PD15) => xanh l� (PD12) */
+  // Turn ON the selected LED based on index
   switch (idx % 4)
   {
     case 0: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); break; // orange
